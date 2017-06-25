@@ -12,7 +12,20 @@ Base.push!(convres::ConvergenceResults, r::Real) = push!(convres.hist, r)
 """
     gmres!(A, b; [tol=1e-6], [maxiter=10])
 
-Solve `Ax=b` using the GMRES method. 
+Solve `Ax=b` using the GMRES method. The input `b` is overwritten during 
+the solution, and it is returned at completion of the algorithm. The inputs
+`A` and `b` are not typed, and can be anything as long as they satisfy the 
+following interface:
+1) `b` must be broadcast-able
+2) `b` must support `norm(b)` and `dot(b, b)`
+3) `A`, `b` must support the product `A*b`
+Note that in 3) we do not check that `size` of `A` and `b` match, but 
+these must be somehow conforming.
+
+The keyword arguments are used to control the iterations:
+    tol     : stop the iteration when `norm(A*xn-b)/norm(b) < tol` where
+              `xn` is the current solution in the n-the krylov subspace.
+    maxiter : stop the iteration after `maxiter` iterations.  
 """
 function gmres!(A, b; tol=1e-6, maxiter=10)
     # store norm of b
