@@ -7,15 +7,14 @@ export ArnoldiIteration, arnoldi!
 # we do not check the `size` of A and b
 
 mutable struct ArnoldiIteration{X, Op}
-    A::Op
-    Q::Vector{X}
-    H::Matrix{Float64}
-    n::Int
+    A::Op              # The linear operator
+    Q::Vector{X}       # Set of Arnoldi vectors
+    H::Matrix{Float64} # The upper Hessemberg matrix
     function ArnoldiIteration{X, Op}(A::Op, b::X) where {X, Op}
         b ./= norm(b)
         Q = X[]
         push!(Q, b)
-        new(A, Q, zeros(0, 0), 1)
+        new(A, Q, zeros(0, 0))
     end
 end
 
@@ -25,7 +24,7 @@ ArnoldiIteration(A, b) =
 # Run arnoldi step
 function arnoldi!(arn::ArnoldiIteration)
     # aliases
-    A, Q, n = arn.A, arn.Q, arn.n
+    A, Q, n = arn.A, arn.Q, length(arn.Q)
     
     # allocate new matrix H
     H = zeros(n+1, n)
@@ -39,17 +38,13 @@ function arnoldi!(arn::ArnoldiIteration)
     # create new vector by successive orthogonalisation
     v = A*Q[n]
     for j = 1:n
-        q = Q[j]
-        h = dot(v, q)
-        v .= v .- h.*q
+        h = dot(v, Q[j])
+        v .= v .- h.*Q[j]
         H[j, n] = h
     end
     H[n+1, n] = norm(v)
     v ./= H[n+1, n]
     push!(Q, v)
 
-    # update
-    arn.n += 1
-    
     return Q, H
 end
