@@ -5,7 +5,7 @@ mutable struct ConvergenceResults
     history::Vector{Float64}
     status::Symbol
 end
-ConvergenceResults() = ConvergenceResults(Float64[1.0], :unknown)
+ConvergenceResults() = ConvergenceResults(Float64[], :unknown)
 
 Base.push!(convres::ConvergenceResults, r::Real) = push!(convres.history, r)
 
