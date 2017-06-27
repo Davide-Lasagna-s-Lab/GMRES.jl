@@ -2,12 +2,12 @@ export gmres!
 
 # Data structure for convergence analysis.
 mutable struct ConvergenceResults
-    hist::Vector{Float64}
+    history::Vector{Float64}
     status::Symbol
 end
 ConvergenceResults() = ConvergenceResults(Float64[1.0], :unknown)
 
-Base.push!(convres::ConvergenceResults, r::Real) = push!(convres.hist, r)
+Base.push!(convres::ConvergenceResults, r::Real) = push!(convres.history, r)
 
 """
     gmres!(A, b; [tol=1e-6], [maxiter=10])
