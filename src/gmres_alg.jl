@@ -27,7 +27,7 @@ The keyword arguments are used to control the iterations:
               `xn` is the current solution in the n-the krylov subspace.
     maxiter : stop the iteration after `maxiter` iterations.  
 """
-function gmres!(A, b; tol=1e-6, maxiter=10)
+function gmres!(A, b, opts::GMRESOptions=GMRESOptions())
     # store norm of b
     bnorm = norm(b)
 
@@ -40,8 +40,8 @@ function gmres!(A, b; tol=1e-6, maxiter=10)
     # right hand side
     g = Float64[bnorm]
     
-    # run for maxiter iterations
-    for i = 1:maxiter
+    # start iterations
+    it = 1; while true
 
         # run arnoldi step
         Q, H = arnoldi!(arn)
@@ -58,15 +58,23 @@ function gmres!(A, b; tol=1e-6, maxiter=10)
         # store trace
         push!(convres, rnorm/bnorm)
 
-        if rnorm < tol
+        # reached tolerance
+        if rnorm < opts.tol
             # update convergence status
             convres.status = :converged
-            return lincomb!(b, Q, y), convres
+            lincomb!(b, Q, y); break
         end
+
+        # reached max iterations
+        if it >= opts.maxiter
+            convres.status = :maxiterreached
+            lincomb!(b, Q, y); break
+        end
+
+        # update
+        it += 1    
     end
 
-    # update convergence status
-    convres.status = :maxiterreached
     return b, convres
 end
 
