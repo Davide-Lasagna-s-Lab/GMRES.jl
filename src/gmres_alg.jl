@@ -34,7 +34,10 @@ function gmres!(A, b, opts::GMRESOptions=GMRESOptions())
     # store trace
     convres = ConvergenceResults()
 
-    # set up arnoldi iteration
+    # Set up arnoldi iteration. Note that `Q[1]` will shadow 
+    # the same memory as `b`. Hence, when we perform 
+    # `lincomb!(b, Q, y)` we might have issues if broadcasting
+    # is not implemented correctly for `typeof(b)`
     arn = ArnoldiIteration(A, b)
 
     # right hand side
