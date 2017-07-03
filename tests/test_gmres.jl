@@ -61,3 +61,17 @@ end
     # cant set zero iterations
     @test_throws AssertionError GMRESOptions(tol=1e-15, maxiter=0)
 end
+
+@testset "verbose                                " begin
+    srand(1)
+    m = 200
+    A = 2*eye(m) + 0.5*randn(m, m)/sqrt(m)
+    x_ex = randn(m)
+    b = A*x_ex
+        
+    # print output
+    opts = GMRESOptions(tol=1e-100, maxiter=5, verbose=true)
+
+    # run
+    gmres!(A, deepcopy(b), opts)
+end

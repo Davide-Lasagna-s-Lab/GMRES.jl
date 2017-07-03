@@ -61,6 +61,9 @@ function gmres!(A, b, opts::GMRESOptions=GMRESOptions())
         # store trace
         push!(convres, rnorm/bnorm)
 
+        # print output
+        opts.verbose && dispstatus(it, convres.history[end])
+
         # reached tolerance
         if rnorm < opts.tol
             # update convergence status
@@ -79,6 +82,14 @@ function gmres!(A, b, opts::GMRESOptions=GMRESOptions())
     end
 
     return b, convres
+end
+
+function dispstatus(it::Int, res)
+    it == 1 && @printf "+-----------+------------+\n"
+    it == 1 && @printf "| GMRES It. |  Res. norm | \n"
+    it == 1 && @printf "+-----------+------------+\n"
+               @printf "     %5d  | %6.5e\n" it res
+    flush(STDOUT)
 end
 
 """
