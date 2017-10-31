@@ -1,16 +1,7 @@
 export gmres!
 
-# Data structure for convergence analysis.
-mutable struct ConvergenceResults
-    history::Vector{Float64}
-    status::Symbol
-end
-ConvergenceResults() = ConvergenceResults(Float64[], :unknown)
-
-Base.push!(convres::ConvergenceResults, r::Real) = push!(convres.history, r)
-
 """
-    gmres!(A, b; [tol=1e-6], [maxiter=10])
+    gmres!(A, b, rtol=1e-2, maxiter=10, verbose=True)
 
 Solve `Ax=b` using the GMRES method. The input `b` is overwritten during 
 the solution, and it is returned at completion of the algorithm. The inputs
@@ -26,13 +17,11 @@ The keyword arguments are used to control the iterations:
     tol     : stop the iteration when `norm(A*xn-b)/norm(b) < tol` where
               `xn` is the current solution in the n-the krylov subspace.
     maxiter : stop the iteration after `maxiter` iterations.  
+    verbose : whether to print iteration status
 """
-function gmres!(A, b, opts::GMRESOptions=GMRESOptions())
+function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=True)
     # store norm of b
     bnorm = norm(b)
-
-    # store trace
-    convres = ConvergenceResults()
 
     # Set up arnoldi iteration. Note that `Q[1]` will shadow 
     # the same memory as `b`. Hence, when we perform 
@@ -58,27 +47,15 @@ function gmres!(A, b, opts::GMRESOptions=GMRESOptions())
         # check convergence
         rnorm = norm(H*y - g)
 
-        # store trace
-        push!(convres, rnorm/bnorm)
-
         # print output
-        opts.verbose && dispstatus(it, convres.history[end])
+        verbose && dispstatus(it, rnorm/bnorm)
 
-        # reached tolerance
-        if rnorm < opts.tol
-            # update convergence status
-            convres.status = :converged
-            lincomb!(b, Q, y); break
-        end
-
-        # reached max iterations
-        if it >= opts.maxiter
-            convres.status = :maxiterreached
-            lincomb!(b, Q, y); break
-        end
+        # reached convergence
+        rnorm/bnorm < rtol && (lincomb!(b, Q, y); break)
+        it >= maxiter      && (lincomb!(b, Q, y); break)
 
         # update
-        it += 1    
+        it += 1
     end
 
     return b, convres
