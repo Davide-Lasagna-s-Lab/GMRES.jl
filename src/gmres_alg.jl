@@ -19,7 +19,7 @@ The keyword arguments are used to control the iterations:
     maxiter : stop the iteration after `maxiter` iterations.  
     verbose : whether to print iteration status
 """
-function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=True)
+function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true)
     # store norm of b
     bnorm = norm(b)
 
@@ -58,7 +58,7 @@ function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=True)
         it += 1
     end
 
-    return b, convres
+    return b
 end
 
 function dispstatus(it::Int, res)
