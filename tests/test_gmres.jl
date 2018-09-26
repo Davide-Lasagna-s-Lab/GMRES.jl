@@ -28,8 +28,7 @@ end
     b = A*x_ex
         
     # solve with large number of iterations
-    opts = GMRESOptions(tol=1e-7, maxiter=20)
-    x, convres = gmres!(A, deepcopy(b), opts)
+    x, res = gmres!(A, deepcopy(b), 1e-7, 20, false)
 
     # norm of error
     @test norm(x - x_ex, 2)/norm(b) < 1e-7

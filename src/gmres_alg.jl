@@ -31,6 +31,9 @@ function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true)
 
     # right hand side
     g = Float64[bnorm]
+
+    # residual norm
+    res_norm = 1.0
     
     # start iterations
     it = 1; while true
@@ -45,20 +48,20 @@ function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true)
         y = arn.H\g 
 
         # check convergence
-        rnorm = norm(H*y - g)
+        res_norm = norm(H*y - g)/bnorm
 
         # print output
-        verbose && dispstatus(it, rnorm/bnorm)
+        verbose && dispstatus(it, res_norm)
 
         # reached convergence
-        rnorm/bnorm < rtol && (lincomb!(b, Q, y); break)
-        it >= maxiter      && (lincomb!(b, Q, y); break)
+        res_norm < rtol && (lincomb!(b, Q, y); break)
+        it >= maxiter   && (lincomb!(b, Q, y); break)
 
         # update
         it += 1
     end
 
-    return b
+    return b, res_norm
 end
 
 function dispstatus(it::Int, res)
