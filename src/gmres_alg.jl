@@ -1,3 +1,6 @@
+using Printf
+using LinearAlgebra
+
 export gmres!
 
 """
@@ -69,7 +72,7 @@ function dispstatus(it::Int, res)
     it == 1 && @printf "| GMRES It. |  Res. norm | \n"
     it == 1 && @printf "+-----------+------------+\n"
                @printf "     %5d  | %6.5e\n" it res
-    flush(STDOUT)
+    flush(stdout)
 end
 
 """

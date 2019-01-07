@@ -1,6 +1,6 @@
 @testset "symmetric                              " begin
     # construct random symmetric matrix and rhs
-    srand(0)
+    Random.seed!(0)
     A = randn(400, 400)
     A = A + A'
     b = randn(400)
@@ -11,7 +11,7 @@
     # the square part must be symmetric to machine accuracy
     for i = 1:6
         Q, H = arnoldi!(arn)
-        @test issymmetric(round.(H[1:i, 1:i], 13))
+        @test issymmetric(round.(H[1:i, 1:i]; digits=13))
     end
 end
 
@@ -66,7 +66,7 @@ end
 
 @testset "orthogonality                          " begin
     # construct random matrix and rhs
-    srand(0)
+    Random.seed!(0)
     A = randn(5, 5)
     b = randn(5)
 
@@ -79,5 +79,5 @@ end
     Q, H = arnoldi!(arn)
     Q, H = arnoldi!(arn)
 
-    @test norm([qi⋅qj for qi in Q, qj in Q] - eye(5)) < 1e-15
+    @test norm([qi⋅qj for qi in Q, qj in Q] - Matrix{Float64}(I, 5, 5)) < 2.0e-15
 end

@@ -1,8 +1,8 @@
 @testset "trefthen                               " begin
     # see Trefthen and Bau for this test case
-    srand(1)
+    Random.seed!(1)
     m = 200
-    A = 2*eye(m) + 0.5*randn(m, m)/sqrt(m)
+    A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
     b = randn(m)
         
     # solve
@@ -16,9 +16,9 @@ end
 
 @testset "norm of error                          " begin
     # see Trefthen and Bau for this test case
-    srand(1)
+    Random.seed!(1)
     m = 200
-    A = 2*eye(m) + 0.5*randn(m, m)/sqrt(m)
+    A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
     x_ex = randn(m)
     b = A*x_ex
         
