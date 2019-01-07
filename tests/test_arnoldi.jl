@@ -1,6 +1,3 @@
-using GMRES
-using Base.Test
-
 @testset "symmetric                              " begin
     # construct random symmetric matrix and rhs
     srand(0)
