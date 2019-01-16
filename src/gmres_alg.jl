@@ -1,5 +1,6 @@
 using Printf
 using LinearAlgebra
+import Roots: find_zero
 
 export gmres!
 
@@ -22,7 +23,19 @@ The keyword arguments are used to control the iterations:
     maxiter : stop the iteration after `maxiter` iterations.  
     verbose : whether to print iteration status
 """
-function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true)
+gmres!(A, b; rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
+    _gmres_impl!(A, b, 0, false, rtol, maxiter, verbose)
+
+gmres!(A, b, Δ::Real; rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
+    _gmres_impl!(A, b, Δ, true, rtol, maxiter, verbose)
+
+function _gmres_impl!(A,
+                      b,
+                      Δ::Real,
+                      solve_hookstep::Bool,
+                      rtol::Real=1e-2,
+                      maxiter::Int=10,
+                      verbose::Bool=true)
     # store norm of b
     bnorm = norm(b)
 
@@ -48,7 +61,20 @@ function gmres!(A, b, rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true)
         push!(g, 0.0)
 
         # solve least squares problem
-        y = arn.H\g 
+        # see Viswanath https://arxiv.org/pdf/0809.1498.pdf
+        if solve_hookstep
+            F = svd(H); U = F.U; d = F.S; V = F.V
+            p = U'*g
+            # find μ > 0 such that ||q|| = Δ. We typically hit μ =0 
+            # if Δ is large than the norm of the exact solution, so we 
+            # add a further check to avoid negative μ
+            fun(μ) = norm(p .* d ./ (μ .+ d.^2)) - Δ
+            μ_0 = max(0.0, find_zero(fun, 1))
+            # construct vector y that generates the hookstep
+            y = V*(p .* d ./ (μ_0 .+ d.^2))
+        else
+            y = arn.H\g
+        end
 
         # check convergence
         res_norm = norm(H*y - g)/bnorm
