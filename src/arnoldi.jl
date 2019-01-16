@@ -35,13 +35,18 @@ function arnoldi!(arn::ArnoldiIteration)
     # store
     arn.H = H
 
-    # create new vector by successive orthogonalisation
+    # classical Gram-Schmid procedure with refinement
+    # see http://slepc.upv.es/documentation/reports/str1.pdf
     v = A*Q[n]
-    for j = 1:n
-        h = dot(v, Q[j])
-        v .= v .- h.*Q[j]
-        H[j, n] = h
+
+    for _ = 1:2
+        for j = 1:n
+            h = dot(v, Q[j])
+            v .= v .- h.*Q[j]
+            H[j, n] += h
+        end
     end
+
     H[n+1, n] = norm(v)
     v ./= H[n+1, n]
     push!(Q, v)
