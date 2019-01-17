@@ -65,11 +65,9 @@ function _gmres_impl!(A,
         if solve_hookstep
             F = svd(H); U = F.U; d = F.S; V = F.V
             p = U'*g
-            # find μ > 0 such that ||q|| = Δ. We typically hit μ =0 
-            # if Δ is large than the norm of the exact solution, so we 
-            # add a further check to avoid negative μ
+            # find μ > 0 such that ||q|| = Δ
             fun(μ) = norm(p .* d ./ (μ .+ d.^2)) - Δ
-            μ_0 = max(0.0, find_zero(fun, 1))
+            μ_0 = fun(0) > 0 ? find_zero(fun, 0) : zero(fun(0))
             # construct vector y that generates the hookstep
             y = V*(p .* d ./ (μ_0 .+ d.^2))
         else
