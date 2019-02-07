@@ -39,14 +39,10 @@ function _gmres_impl!(A,
     # store norm of b
     bnorm = norm(b)
 
-    # Set up arnoldi iteration. Note that `Q[1]` will shadow 
-    # the same memory as `b`. Hence, when we perform 
-    # `lincomb!(b, Q, y)` we might have issues if broadcasting
-    # is not implemented correctly for `typeof(b)`
-    arn = ArnoldiIteration(A, b)
-
     # right hand side
     g = Float64[bnorm]
+
+    arnit = ArnoldiIteration(A, b)
 
     # residual norm
     res_norm = 1.0
@@ -55,7 +51,7 @@ function _gmres_impl!(A,
     it = 1; while true
 
         # run arnoldi step
-        Q, H = arnoldi!(arn)
+        Q, H = arnoldi!(arnit)
 
         # grow right hand side
         push!(g, 0.0)
@@ -71,7 +67,7 @@ function _gmres_impl!(A,
             # construct vector y that generates the hookstep
             y = V*(p .* d ./ (μ_0 .+ d.^2))
         else
-            y = arn.H\g
+            y = arnit.H\g
         end
 
         # check convergence
@@ -88,7 +84,7 @@ function _gmres_impl!(A,
         it += 1
     end
 
-    return b, res_norm
+    return b, res_norm, it
 end
 
 function dispstatus(it::Int, res)

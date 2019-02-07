@@ -6,7 +6,7 @@
     b = randn(m)
         
     # solve
-    x, res_norm = gmres!(A, deepcopy(b); rtol=1e-7, maxiter=10, verbose=false)
+    x, res_norm, it = gmres!(A, deepcopy(b); rtol=1e-7, maxiter=10, verbose=false)
 
     # check convergence rate
     expected = [4.0^(-n) for n = 1:10]
@@ -23,7 +23,7 @@ end
     b = A*x_ex
         
     # solve with large number of iterations
-    x, res = gmres!(A, deepcopy(b); rtol=1e-7, maxiter=20, verbose=false)
+    x, res, it = gmres!(A, deepcopy(b); rtol=1e-7, maxiter=20, verbose=false)
 
     # norm of error
     @test norm(x - x_ex, 2)/norm(b) < 1e-7
@@ -47,14 +47,14 @@ end
     # is the exact solution, with small residual
     Δ = 100
     
-    x, res = gmres!(A, deepcopy(b), Δ; rtol=1e-10, maxiter=20, verbose=false)
+    x, res, it = gmres!(A, deepcopy(b), Δ; rtol=1e-10, maxiter=20, verbose=false)
 
     @test res < 1e-10
         
     # for medium Δ we need to respect the constraint
     Δ = 1
     
-    x, res = gmres!(A, deepcopy(b), Δ; rtol=1e-10, maxiter=50, verbose=false)
+    x, res, it = gmres!(A, deepcopy(b), Δ; rtol=1e-10, maxiter=50, verbose=false)
     @test norm(x) < (1 + 1e-15)*Δ
 
     # in addition, the minimum of ||A*x - b|| s.t. ||x|| < Δ
