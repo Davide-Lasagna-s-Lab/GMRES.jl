@@ -94,20 +94,3 @@ function dispstatus(it::Int, res)
                @printf "     %5d  | %6.5e\n" it res
     flush(stdout)
 end
-
-"""
-    lincomb!(out, Q, y)
-
-Compute linear combination of first `n` Arnoldi vectors in `Q` using weights in the 
-vector `y` of length `n`, writing the result in `out`. With this function, the
-solution in the full space is recovered from its projection `y` on the Krylov
-subspace basis given by Arnoldi basis vectors `Q[1:n]`.
-"""
-function lincomb!(out::X, Q::Vector{X}, y::Vector{<:Real}) where X
-    length(Q) == length(y)+1 || error("length(Q) must be length(y)+1")
-    out .= Q[1].*y[1]
-    for i = 2:length(y)
-        out .+= Q[i].*y[i]
-    end
-    return out
-end

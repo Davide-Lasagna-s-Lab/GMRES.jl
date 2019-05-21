@@ -5,3 +5,4 @@ using LinearAlgebra
 
 include("test_gmres.jl")
 include("test_arnoldi.jl")
+include("test_eigs.jl")
