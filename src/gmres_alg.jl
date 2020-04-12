@@ -18,20 +18,23 @@ Note that in 3) we do not check that `size` of `A` and `b` match, but
 these must be somehow conforming.
 
 The keyword arguments are used to control the iterations:
-    tol     : stop the iteration when `norm(A*xn-b)/norm(b) < tol` where
+    rtol     : stop the iteration when `norm(A*xn-b)/norm(b) < rtol` where
               `xn` is the current solution in the n-the krylov subspace.
     maxiter : stop the iteration after `maxiter` iterations.  
     verbose : whether to print iteration status
+    m       : restart GMRES every m iterations
+    Δ       : trust region radius
 """
-gmres!(A, b; rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
-    _gmres_impl!(A, b, 0, false, rtol, maxiter, verbose)
+gmres!(A, b; m::Int=typemax(Int), rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
+    _gmres_impl!(A, b, 0, m, false, rtol, maxiter, verbose)
 
-gmres!(A, b, Δ::Real; rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
-    _gmres_impl!(A, b, Δ, true, rtol, maxiter, verbose)
+gmres!(A, b, Δ::Real; m::Int=typemax(Int), rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
+    _gmres_impl!(A, b, Δ, m, true, rtol, maxiter, verbose)
 
 function _gmres_impl!(A,
                       b,
                       Δ::Real,
+                      m::Int,
                       solve_hookstep::Bool,
                       rtol::Real=1e-2,
                       maxiter::Int=10,
@@ -80,6 +83,18 @@ function _gmres_impl!(A,
         res_norm < rtol && (lincomb!(b, Q, y); break)
         it >= maxiter   && (lincomb!(b, Q, y); break)
 
+        # restart
+        if it % m == 0 
+            # right hand side
+            g = Float64[bnorm]
+
+            # get current estimate of b
+            lincomb!(b, Q, y)
+            
+            # restart iteration
+            arnit = ArnoldiIteration(A, b)
+        end
+        
         # update
         it += 1
     end

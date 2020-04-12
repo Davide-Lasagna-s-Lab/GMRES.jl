@@ -1,3 +1,19 @@
+@testset "restart                               " begin
+    # see Trefthen and Bau for this test case
+    Random.seed!(1)
+    m = 200
+    A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
+    b = randn(m)
+        
+    # solve
+    x, res_norm, it = gmres!(A, deepcopy(b); m = 10, rtol=1e-7, maxiter=10, verbose=false)
+
+    # check convergence rate
+    expected = [4.0^(-n) for n = 1:10]
+    @test res_norm < 1.1*(4.0^(-10.0))
+    @test res_norm > 0.7*(4.0^(-10.0))
+end
+
 @testset "trefthen                               " begin
     # see Trefthen and Bau for this test case
     Random.seed!(1)
