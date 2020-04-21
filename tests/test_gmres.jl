@@ -1,17 +1,18 @@
-@testset "restart                               " begin
+@testset "restart                                " begin
     # see Trefthen and Bau for this test case
     Random.seed!(1)
     m = 200
     A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
     b = randn(m)
+    x = zeros(m)
         
     # solve
-    x, res_norm, it = gmres!(A, deepcopy(b); m = 10, rtol=1e-7, maxiter=10, verbose=false)
+    x, res_norm, it = gmres!(x, A, b; m = 2, rel_rtol=1e-7, maxiter=10, verbose=false)
 
     # check convergence rate
     expected = [4.0^(-n) for n = 1:10]
-    @test res_norm < 1.1*(4.0^(-10.0))
-    @test res_norm > 0.7*(4.0^(-10.0))
+    @test res_norm/norm(b) < 1.1*(4.0^(-10.0))
+    @test res_norm/norm(b) > 0.7*(4.0^(-10.0))
 end
 
 @testset "trefthen                               " begin
@@ -20,14 +21,15 @@ end
     m = 200
     A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
     b = randn(m)
+    x = zeros(m)
         
     # solve
-    x, res_norm, it = gmres!(A, deepcopy(b); rtol=1e-7, maxiter=10, verbose=false)
+    x, res_norm, it = gmres!(x, A, b; rel_rtol=1e-7, maxiter=10, verbose=false)
 
     # check convergence rate
     expected = [4.0^(-n) for n = 1:10]
-    @test res_norm < 1.1*(4.0^(-10.0))
-    @test res_norm > 0.7*(4.0^(-10.0))
+    @test res_norm/norm(b) < 1.1*(4.0^(-10.0))
+    @test res_norm/norm(b) > 0.7*(4.0^(-10.0))
 end
 
 @testset "norm of error                          " begin
@@ -37,9 +39,17 @@ end
     A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
     x_ex = randn(m)
     b = A*x_ex
+    x = zeros(m)
         
     # solve with large number of iterations
-    x, res, it = gmres!(A, deepcopy(b); rtol=1e-7, maxiter=20, verbose=false)
+    x, r_norm, it = gmres!(x, A, b; rel_rtol=1e-7, maxiter=20, verbose=false)
+
+    # norm of error
+    @test norm(x - x_ex, 2)/norm(b) < 1e-7
+    @test norm(A*x - b,  2)/norm(b) < 1e-7
+
+    # try non zero initial vector
+    x, r_norm, it = gmres!(randn(m), A, b; rel_rtol=1e-7, maxiter=20, verbose=false)
 
     # norm of error
     @test norm(x - x_ex, 2)/norm(b) < 1e-7
@@ -55,6 +65,9 @@ end
     # exact solution
     x_ex = randn(m)
 
+    # initial guess
+    x = zeros(m)
+
     # right hand side
     b = A*x_ex
 
@@ -63,14 +76,17 @@ end
     # is the exact solution, with small residual
     Δ = 100
     
-    x, res, it = gmres!(A, deepcopy(b), Δ; rtol=1e-10, maxiter=20, verbose=false)
+    x, r_norm, it = gmres!(x, A, b, Δ; rel_rtol=1e-10, maxiter=20, verbose=false)
 
-    @test res < 1e-10
+    @test r_norm/norm(b) < 1e-10
         
     # for medium Δ we need to respect the constraint
     Δ = 1
+
+    # initial guess
+    x = zeros(m)
     
-    x, res, it = gmres!(A, deepcopy(b), Δ; rtol=1e-10, maxiter=50, verbose=false)
+    x, r_norm, it = gmres!(x, A, b, Δ; rel_rtol=1e-10, maxiter=50, verbose=false)
     @test norm(x) < (1 + 1e-15)*Δ
 
     # in addition, the minimum of ||A*x - b|| s.t. ||x|| < Δ

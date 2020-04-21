@@ -1,4 +1,4 @@
-@testset "eigvals                               " begin
+@testset "eigvals                                " begin
     # see Trefthen and Bau for this test case
     Random.seed!(1)
     m = 200
