@@ -6,13 +6,13 @@
     b = ones(m)
         
     # solve
-    evals = GMRES.eigvals(A, b, 4, 100)
+    evals = GMRES.eigvals(A, b, 4, 200)
 
     # test output
-    @test length(evals[1]) == 100
-    @test length(evals[2]) == 100
-    @test length(evals[3]) == 100
-    @test length(evals[4]) == 100
+    @test length(evals[1]) == 200
+    @test length(evals[2]) == 200
+    @test length(evals[3]) == 200
+    @test length(evals[4]) == 200
 
     # test convergence
     real_eigvals = sort(LinearAlgebra.eigvals(A); by=real, rev=true)

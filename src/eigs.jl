@@ -44,7 +44,7 @@ function eigvals(A, v, nev::Int, niter::Int)
         end
 
         # push eigenvalues to history
-        for i = 1:length(evals)
+        for i = eachindex(evals)
             push!(evals[i], vals[i])
         end
 
