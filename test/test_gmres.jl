@@ -94,7 +94,6 @@ end
     # proper optimisation. To achieve this, however, we need to 
     # have enough iteration so that the basis vectors of the 
     # krylov subspace span the minimum of the problem
-    using NLopt
 
     # function and constraint
     fun(x, grad) = (val = norm(A*x .- b); val)
