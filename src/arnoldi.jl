@@ -25,12 +25,12 @@ ArnoldiIteration(A, b) =
 function arnoldi!(arn::ArnoldiIteration)
     # aliases
     A, Q, n = arn.A, arn.Q, length(arn.Q)
-    
+
     # allocate new matrix H
     H = zeros(n+1, n)
     
     # copy last iteration
-    H[1:n, 1:n-1] = arn.H 
+    H[1:n, 1:n-1] = arn.H
 
     # store
     arn.H = H
@@ -38,11 +38,13 @@ function arnoldi!(arn::ArnoldiIteration)
     # classical Gram-Schmid procedure with refinement
     # see http://slepc.upv.es/documentation/reports/str1.pdf
     v = A*Q[n]
+    # @show norm(v[1]) norm(v[2]) norm(v[3]) norm(v[4]) norm(v[5]) norm(v[6]) norm(v[7]) norm(v[8])
+    # @show norm(Q[1][1]) norm(Q[1][2]) norm(Q[1][3]) norm(Q[1][4]) norm(Q[1][5]) norm(Q[1][6]) norm(Q[1][7]) norm(Q[1][8])
 
     for _ = 1:2
         for j = 1:n
             h = dot(v, Q[j])
-            v .= v .- h.*Q[j]
+            v .-= h.*Q[j]
             H[j, n] += h
         end
     end
@@ -68,7 +70,7 @@ If the keyword argument `add` is true, the linear combination of the columns of
 """
 function lincomb!(out::X, Q::Vector{X}, y::Vector; add::Bool=false) where X
     length(Q) == length(y)+1 || error("length(Q) must be length(y)+1")
-    if add == true
+    if add
         out .+= Q[1].*y[1]
     else
         out .= Q[1].*y[1]

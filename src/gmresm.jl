@@ -67,7 +67,7 @@ function _gmres_impl!(x,
 
     # right hand side
     g = Float64[r_norm]
-    
+
     # start iterations
     it = 1; while true
 
@@ -83,10 +83,10 @@ function _gmres_impl!(x,
             F = svd(H); U = F.U; d = F.S; V = F.V
             p = U'*g
             # find μ > 0 such that ||q|| = Δ
-            fun(μ) = norm(p .* d ./ (μ .+ d.^2)) - Δ
+            fun(μ) = norm(p .* d ./ (μ.+ d.^2)) - Δ
             μ_0 = fun(0) > 0 ? find_zero(fun, 0) : zero(fun(0))
             # construct vector y that generates the hookstep
-            y = V*(p .* d ./ (μ_0 .+ d.^2))
+            y = V*(p .* d ./ (μ_0.+ d.^2))
         else
             y = arnit.H\g
         end
