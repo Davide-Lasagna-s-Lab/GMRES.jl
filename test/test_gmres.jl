@@ -5,7 +5,7 @@
     A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
     b = randn(m)
     x = zeros(m)
-        
+
     # solve
     x, res_norm, it = gmres!(x, A, b; m = 2, rel_rtol=1e-7, maxiter=10, verbose=false)
 
