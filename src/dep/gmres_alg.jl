@@ -2,8 +2,6 @@ using Printf
 using LinearAlgebra
 import Roots: find_zero
 
-export gmres!
-
 """
     gmres!(A, b, rtol=1e-2, maxiter=10, verbose=True)
 
@@ -26,10 +24,10 @@ The keyword arguments are used to control the iterations:
     Δ       : trust region radius
 """
 gmres!(A, b; m::Int=typemax(Int), rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
-    _gmres_impl!(A, b, 0, m, false, rtol, maxiter, verbose)
+    (Base.depwarn("This interface for gmres! is deprecated", :gmres!, force=true); _gmres_impl!(A, b, 0, m, false, rtol, maxiter, verbose))
 
 gmres!(A, b, Δ::Real; m::Int=typemax(Int), rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true) =
-    _gmres_impl!(A, b, Δ, m, true, rtol, maxiter, verbose)
+    (Base.depwarn("This interface for gmres! is deprecated", :gmres!, force=true); _gmres_impl!(A, b, Δ, m, true, rtol, maxiter, verbose))
 
 function _gmres_impl!(A,
                       b,
@@ -100,12 +98,4 @@ function _gmres_impl!(A,
     end
 
     return b, res_norm, it
-end
-
-function dispstatus(it::Int, res)
-    it == 1 && @printf "+-----------+------------+\n"
-    it == 1 && @printf "| GMRES It. |  Res. norm | \n"
-    it == 1 && @printf "+-----------+------------+\n"
-               @printf "     %5d  | %6.5e\n" it res
-    flush(stdout)
 end
