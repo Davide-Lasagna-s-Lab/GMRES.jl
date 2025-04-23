@@ -6,6 +6,7 @@ export ArnoldiIteration, arnoldi!
 # A, b must support A*b
 # we do not check the `size` of A and b
 
+# ! This implementation seems a little inefficient, with what appears to unnecessary allocations each call to arnoldi!
 mutable struct ArnoldiIteration{X, Op}
     A::Op              # The linear operator
     Q::Vector{X}       # Set of Arnoldi vectors
