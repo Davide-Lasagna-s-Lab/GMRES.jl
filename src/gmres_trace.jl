@@ -5,7 +5,7 @@ mutable struct GMRESTrace{X}
     Qs::Vector{Vector{X}}
     Hs::Vector{Matrix{Float64}}
 
-    GMRESTrace(x::X) where {X} = new{X}(Int[], Vector{X}[], Matrix{Float64}[])
+    GMRESTrace(::X) where {X} = new{X}(Int[], Vector{X}[], Matrix{Float64}[])
 end
 
 Base.length(t::GMRESTrace) = length(t.its)
