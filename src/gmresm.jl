@@ -25,8 +25,8 @@ The keyword arguments are used to control the iterations:
     verbose  : whether to print iteration status
     m        : restart GMRES every m iterations
 """
-gmres!(x, A, b; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, trace::Union{Nothing, GMRESTrace}=nothing) =
-    _gmres_impl!(x, A, b, 0, m, false, trace, rel_rtol, maxiter, verbose)
+gmres!(x, A, b; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, callback=nothing) =
+    _gmres_impl!(x, A, b, 0, m, false, rel_rtol, maxiter, verbose, callback)
 
 
 """
@@ -39,8 +39,8 @@ Using `x` as an initial guess, solve the problem
 
 using the GMRES method and the hookstep method (see https://arxiv.org/pdf/0809.1498.pdf).
 """
-gmres!(x, A, b, Δ::Real; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, trace::Union{Nothing, GMRESTrace}=nothing) =
-    _gmres_impl!(x, A, b, Δ, m, true, trace, rel_rtol, maxiter, verbose)
+gmres!(x, A, b, Δ::Real; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, callback=nothing) =
+    _gmres_impl!(x, A, b, Δ, m, true, rel_rtol, maxiter, verbose, callback)
 
 function _gmres_impl!(x, 
                       A,
@@ -48,10 +48,10 @@ function _gmres_impl!(x,
                       Δ::Real,
                       m::Int,
                       solve_hookstep::Bool,
-                      trace::T,
                       rel_rtol::Real=1e-2,
                       maxiter::Int=10,
-                      verbose::Bool=true,) where {T<:Union{Nothing, GMRESTrace}}
+                      verbose::Bool=true,
+                      callback=nothing)
     # store norm of b
     b_norm = norm(b)
 
@@ -67,6 +67,9 @@ function _gmres_impl!(x,
 
     # right hand side
     g = Float64[r_norm]
+
+    # update callback
+    !isnothing(callback) && callback(it, r_norm, typeof(x)[], Float64[])
 
     # start iterations
     it = 1; while true
@@ -96,6 +99,9 @@ function _gmres_impl!(x,
         # print output with relative residual norm
         verbose && dispstatus(it, r_norm/b_norm)
 
+        # update callback
+        !isnothing(callback) && callback(it, r_norm, Q, y)
+
         # reached convergence
         r_norm < rel_rtol*b_norm && (lincomb!(x, Q, y; add=true); break)
         it >= maxiter            && (lincomb!(x, Q, y; add=true); break)
@@ -120,11 +126,6 @@ function _gmres_impl!(x,
         
         # update
         it += 1
-    end
-
-    # update trace with final state
-    if T <: GMRESTrace
-        push!(trace, it, arnit.Q, arnit.H)
     end
 
     return x, r_norm, it
