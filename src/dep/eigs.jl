@@ -1,6 +1,5 @@
-export eigvals, eigs
-
 function eigs(A, v, nev::Int, niter::Int)
+    Base.depwarn("This interface for eigenvalue estimation is deprecated", :eigs!, force=true)
 
     # setup arnoldi iteration
     arnit = ArnoldiIteration(A, v)
@@ -23,6 +22,7 @@ function eigs(A, v, nev::Int, niter::Int)
 end
 
 function eigvals(A, v, nev::Int, niter::Int)
+    Base.depwarn("This interface for eigenvalue estimation is deprecated", :eigvals!, force=true)
 
     # setup arnoldi iteration
     arnit = ArnoldiIteration(A, v)
