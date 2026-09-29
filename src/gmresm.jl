@@ -24,8 +24,10 @@ The keyword arguments are used to control the iterations:
     maxiter  : stop the iteration after `maxiter` iterations.  
     verbose  : whether to print iteration status
     m        : restart GMRES every m iterations
+    callback : optional callback function to keep track of values during operation,
+               with a signature `callback(it::Int, r_norm::Float64, Q::Vector{typeof(x)}, H::Matrix{Float64}, y::Vector{Float64})`
 """
-gmres!(x, A, b; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, callback=nothing) =
+gmres!(x, A, b; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, callback=(args...)->false) =
     _gmres_impl!(x, A, b, 0, m, false, rel_rtol, maxiter, verbose, callback)
 
 
@@ -39,7 +41,7 @@ Using `x` as an initial guess, solve the problem
 
 using the GMRES method and the hookstep method (see https://arxiv.org/pdf/0809.1498.pdf).
 """
-gmres!(x, A, b, Δ::Real; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, callback=nothing) =
+gmres!(x, A, b, Δ::Real; m::Int=typemax(Int), rel_rtol::Real=1e-2, maxiter::Int=10, verbose::Bool=true, callback=(args...)->false) =
     _gmres_impl!(x, A, b, Δ, m, true, rel_rtol, maxiter, verbose, callback)
 
 function _gmres_impl!(x, 
@@ -51,7 +53,7 @@ function _gmres_impl!(x,
                       rel_rtol::Real=1e-2,
                       maxiter::Int=10,
                       verbose::Bool=true,
-                      callback=nothing)
+                      callback=(args...)->false)
     # store norm of b
     b_norm = norm(b)
 
@@ -69,7 +71,7 @@ function _gmres_impl!(x,
     g = Float64[r_norm]
 
     # update callback
-    !isnothing(callback) && callback(it, r_norm, typeof(x)[], Float64[])
+    callback(0, r_norm, typeof(x)[], Matrix{Float64}(undef, 0, 0), Float64[]) && return x, r_norm, 0
 
     # start iterations
     it = 1; while true
@@ -100,7 +102,7 @@ function _gmres_impl!(x,
         verbose && dispstatus(it, r_norm/b_norm)
 
         # update callback
-        !isnothing(callback) && callback(it, r_norm, Q, y)
+        callback(it, r_norm, Q, H, y) && break
 
         # reached convergence
         r_norm < rel_rtol*b_norm && (lincomb!(x, Q, y; add=true); break)
