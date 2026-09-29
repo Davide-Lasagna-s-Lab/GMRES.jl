@@ -60,7 +60,7 @@ julia> length(λ)
 20
 ```
 """
-function arnoldi_eigvals(A, b; m=length(b), ϵ=1e-6)
+function arnoldi_eigvals(A, b; m=length(b), ϵ=1e-6, verbose=false)
     arnit = ArnoldiIteration(A, b)
     local Λ, res
     for i in 1:m
@@ -71,7 +71,10 @@ function arnoldi_eigvals(A, b; m=length(b), ϵ=1e-6)
         # https://www.netlib.org/utk/people/JackDongarra/etemplates/node216.html
         res = [H[i + 1, i]*abs(F.vectors[end, j]) for j in 1:i]
 
+        verbose && (print("||res|| = ", norm(res), "                   \r"); flush(stdout))
+
         norm(res) < ϵ && break
     end
+    verbose && (println(); flush(stdout))
     return Λ, res
 end
