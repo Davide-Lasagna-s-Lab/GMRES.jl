@@ -86,7 +86,8 @@ end
     # initial guess
     x = zeros(m)
     
-    x, r_norm, it = gmres!(x, A, b, Δ; rel_rtol=1e-10, maxiter=50, verbose=false)
+    # (a complete Krylov space: rel_rtol = 0 runs all the m iterations)
+    x, r_norm, it = gmres!(x, A, b, Δ; rel_rtol=0.0, maxiter=50, verbose=false)
     @test norm(x) < (1 + 1e-15)*Δ
 
     # in addition, the minimum of ||A*x - b|| s.t. ||x|| < Δ
@@ -110,4 +111,56 @@ end
 
     # this should be what we got before
     @test abs( norm(A*x.- b) - norm(A*optx .- b) ) < 1e-13
+end
+
+# an operator that counts its products, for the tests of the hookstep
+mutable struct Counted{M}
+    A::M        # the matrix
+    n::Int      # the products so far
+end
+Base.:*(C::Counted, x) = (C.n += 1; C.A*x)
+
+@testset "hookstep, stop on the Newton residual  " begin
+    Random.seed!(1)
+    m = 50
+    A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
+    b = A*randn(m)
+    C = Counted(A, 0)
+
+    # Δ binds: the iteration stops when the unconstrained solution in the Krylov space meets the tolerance, well
+    # before a complete space, with one product per iteration from a zero initial guess
+    Δ = 1
+    x, r_norm, it, K = gmres!(zeros(m), C, b, Δ; rel_rtol=1e-8, maxiter=50, verbose=false)
+    @test it < 30
+    @test C.n == it
+    @test norm(x) < (1 + 1e-12)*Δ
+    @test norm(K.H*(K.H\K.g) - K.g)/norm(b) < 1e-8
+    @test abs(r_norm - norm(A*x - b))/norm(b) < 1e-10
+    @test r_norm/norm(b) > 1e-2
+end
+
+@testset "hookstep for another radius            " begin
+    Random.seed!(1)
+    m = 50
+    A = 2*Matrix{Float64}(I, m, m) + 0.5*randn(m, m)/sqrt(m)
+    b = A*randn(m)
+
+    # the hookstep for a smaller radius in the Krylov space of the first call (hookstep! has no access to A) is that
+    # of a new call with the smaller radius, which stops at the same iteration
+    x₁, r₁, it₁, K = gmres!(zeros(m), A, b, 1.0; rel_rtol=1e-8, maxiter=50, verbose=false)
+    x₂, r₂ = hookstep!(zeros(m), K, 0.25)
+    x₃, r₃, it₃, _ = gmres!(zeros(m), A, b, 0.25; rel_rtol=1e-8, maxiter=50, verbose=false)
+    @test it₃ == it₁
+    @test norm(x₂ - x₃) < 1e-12
+    @test abs(r₂ - r₃)/norm(b) < 1e-12
+    @test abs(r₂ - norm(A*x₂ - b))/norm(b) < 1e-10
+    @test norm(x₂) < (1 + 1e-12)*0.25
+
+    # from a nonzero initial guess the radius bounds the correction
+    x₀ = 0.1*randn(m)
+    x, r, it, K = gmres!(copy(x₀), A, b, 1.0; rel_rtol=1e-8, maxiter=50, verbose=false)
+    @test K.x₀ == x₀
+    x₄, r₄ = hookstep!(zeros(m), K, 0.25)
+    @test norm(x₄ - x₀) < (1 + 1e-12)*0.25
+    @test abs(r₄ - norm(A*x₄ - b))/norm(b) < 1e-10
 end
