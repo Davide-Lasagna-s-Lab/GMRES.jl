@@ -64,6 +64,9 @@ function _gmres_impl!(x,
     # residual norm
     r_norm = norm(r)
 
+    # the initial guess solves the system exactly
+    r_norm == 0 && return x, r_norm, 0
+
     # setup Arnoldi iteration. This will modify `r`, so we compute its norm first 
     arnit = ArnoldiIteration(A, r)
 
@@ -104,8 +107,10 @@ function _gmres_impl!(x,
         # update callback
         callback(it, r_norm, Q, H, y) && break
 
-        # reached convergence
+        # reached convergence, or an exact breakdown, after which the solution in the
+        # Krylov subspace is exact and the subspace cannot grow
         r_norm < rel_rtol*b_norm && (lincomb!(x, Q, y; add=true); break)
+        H[end, end] == 0         && (lincomb!(x, Q, y; add=true); break)
         it >= maxiter            && (lincomb!(x, Q, y; add=true); break)
 
         # restart
