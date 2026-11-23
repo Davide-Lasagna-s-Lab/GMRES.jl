@@ -111,3 +111,31 @@ end
     # this should be what we got before
     @test abs( norm(A*x.- b) - norm(A*optx .- b) ) < 1e-13
 end
+@testset "exact breakdown and zero residual      " begin
+    m = 10
+    b = zeros(m); b[1] = 1
+
+    # A*b is parallel to b, so the Krylov subspace is invariant after one iteration
+    for hookstep in (false, true)
+        A = 2*Matrix{Float64}(I, m, m)
+        x = zeros(m)
+        x, res_norm, it = hookstep ? gmres!(x, A, b, 10.0; rel_rtol=0.0, maxiter=5, verbose=false) :
+                                     gmres!(x, A, b;       rel_rtol=0.0, maxiter=5, verbose=false)
+        @test it == 1 && res_norm == 0
+        @test x ≈ b./2
+    end
+
+    # an identity plus a rank-one update has a Krylov subspace of dimension two
+    Random.seed!(1)
+    u, v = randn(m), randn(m)
+    A = Matrix{Float64}(I, m, m) + u*v'
+    c = randn(m)
+    x, res_norm, it = gmres!(zeros(m), A, c; rel_rtol=0.0, maxiter=5, verbose=false)
+    @test all(isfinite, x) && norm(A*x - c) < 1e-12*norm(c)
+
+    # an initial guess that solves the system, and a zero right-hand side
+    x, res_norm, it = gmres!(b./2, 2*Matrix{Float64}(I, m, m), b; verbose=false)
+    @test (x, res_norm, it) == (b./2, 0.0, 0)
+    x, res_norm, it = gmres!(zeros(m), 2*Matrix{Float64}(I, m, m), zeros(m); verbose=false)
+    @test (x, res_norm, it) == (zeros(m), 0.0, 0)
+end

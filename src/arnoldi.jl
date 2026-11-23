@@ -49,8 +49,10 @@ function arnoldi!(arn::ArnoldiIteration)
         end
     end
 
+    # A zero norm is an exact breakdown: the Krylov subspace is invariant under A. The
+    # zero vector is kept, unnormalised, so that the solution in the subspace is exact.
     H[n+1, n] = norm(v)
-    v ./= H[n+1, n]
+    H[n+1, n] > 0 && (v ./= H[n+1, n])
     push!(Q, v)
 
     return Q, H
